@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd"
+>
+    <context:annotation-config/>
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:config/application.properties"/>
+        <property name="fileEncoding" value="UTF-8"/>
+    </bean>
+    <!-- 不扫描controller 通过注解进行事物管理  -->
+    <context:component-scan base-package="com.whh">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+
+    <!-- 配置数据源 开始-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init"
+          destroy-method="close">
+        <!-- 地址 -->
+        <property name="url" value="${mysql.jdbc.url}"/>
+        <!-- 用户名 -->
+        <property name="username" value="${mysql.jdbc.user}"/>
+        <!-- 密码 -->
+        <property name="password" value="${mysql.jdbc.password}"/>
+        <!-- 配置初始化大小、最小、最大 -->
+        <property name="initialSize" value="${mysql.jdbc.initialSize}"/>
+        <property name="minIdle" value="${mysql.jdbc.minIdle}"/>
+        <property name="maxActive" value="${mysql.jdbc.maxActive}"/>
+        <!-- 配置获取连接等待超时的时间 -->
+        <property name="maxWait" value="60000"/>
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="testOnBorrow" value="true"/>
+        <property name="testOnReturn" value="false"/>
+        <property name="validationQuery" value="select 1"/>
+        <!-- 打开PSCache，并且指定每个连接上PSCache的大小 mysql false -->
+        <property name="poolPreparedStatements" value="false"/>
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="20"/>
+        <!-- 配置监控统计拦截的filters -->
+        <property name="filters" value="stat,slf4j"/>
+        <property name="connectionProperties" value="config.decrypt=false"/>
+    </bean>
+    <!-- 配置数据源 结束-->
+
+    <!-- 对dataSource 数据源进行事务管理 开始-->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!-- 对dataSource 数据源进行事务管理 结束-->
+
+    <!-- 线程池 开始-->
+    <bean id="threadPoolTaskExecutor"
+          class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="2"/>
+        <property name="maxPoolSize" value="30"/>
+        <property name="queueCapacity" value="100"/>
+    </bean>
+    <!-- 线程池结束 -->
+
+    <!-- MyBatis配置开始 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--dataSource属性指定要用到的连接池 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 所有配置的mapper文件 -->
+        <property name="mapperLocations" value="classpath*:mapper/**/*.xml"/>
+
+    </bean>
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.whh.**.mapper"/>
+    </bean>
+    <!-- MyBatis配置结束 -->
+</beans>
